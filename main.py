@@ -1,7 +1,16 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from typing import List
-
 from starlette.middleware.cors import CORSMiddleware
+import logging
+import os
+from fastapi import FastAPI
+
+from connections import ConnectionManager
+from routes.websocket import router as websocket_router
+from routes.count import router as count_router
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 app = FastAPI()
 
@@ -14,45 +23,10 @@ app.add_middleware(
 )
 
 
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-        self.total_messages: int = 0
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: str):
-        self.total_messages += 1
-        print(self.total_messages)
-        for connection in self.active_connections:
-            await connection.send_text(message)
-
-
-manager = ConnectionManager()
-
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            await manager.broadcast(data)
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-
-
-@app.get("/messages/count")
-async def get_message_count():
-    return {"total_messages": manager.total_messages}
-
-
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
+    app.include_router(websocket_router)
+    app.include_router(count_router)
+    
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
