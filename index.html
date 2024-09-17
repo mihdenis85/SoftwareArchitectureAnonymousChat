@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анонимный Чат</title>
+    <style>
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+        }
+
+        #input {
+            margin-top: 10px;
+        }
+
+        #messageCount {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<h1>Анонимный Чат</h1>
+<div id="messages"></div>
+<input id="messageText" type="text" placeholder="Введите сообщение..." autocomplete="off"/>
+<button onclick="sendMessage()">Отправить</button>
+<button onclick="fetchMessageCount()">Обновить количество сообщений</button>
+<div id="messageCount">Общее количество сообщений: 0</div>
+
+<script>
+    const messageText = document.getElementById('messageText');
+    const messages = document.getElementById('messages');
+    const messageCountElement = document.getElementById('messageCount');
+
+    const ws = new WebSocket('ws://localhost:8000/ws');
+
+    ws.onmessage = function (event) {
+        const message = event.data;
+        const messageElement = document.createElement('div');
+        messageElement.textContent = message;
+        messages.appendChild(messageElement);
+        messages.scrollTop = messages.scrollHeight;
+    };
+
+    function sendMessage() {
+        if (messageText.value !== '') {
+            const message = messageText.value;
+            ws.send(message);
+            messageText.value = '';
+        }
+    }
+
+    function fetchMessageCount() {
+        fetch('http://localhost:8000/messages/count')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && 'total_messages' in data) {
+                    messageCountElement.textContent = `Общее количество сообщений: ${data.total_messages}`;
+                } else {
+                    messageCountElement.textContent = 'Не удалось получить количество сообщений';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка получения количества сообщений:', error);
+                messageCountElement.textContent = 'Произошла ошибка при загрузке данных';
+            });
+    }
+
+    fetchMessageCount();
+</script>
+
+</body>
+</html>
