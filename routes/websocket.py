@@ -1,8 +1,10 @@
+import logging
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from connections import ConnectionManager
+
+from connections import manager
 
 router = APIRouter()
-manager = ConnectionManager()
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

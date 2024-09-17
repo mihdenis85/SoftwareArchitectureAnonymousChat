@@ -3,6 +3,8 @@ from typing import List
 from fastapi import WebSocket
 import logging
 
+from starlette.websockets import WebSocketDisconnect
+
 
 class ConnectionManager:
     def __init__(self):
@@ -34,3 +36,5 @@ class ConnectionManager:
                 logging.warning(f"WebSocket disconnected: {connection.client}")
             except Exception as e:
                 logging.error(f"Error sending message to {connection.client}: {e}")
+
+manager = ConnectionManager()

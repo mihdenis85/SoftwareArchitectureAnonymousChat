@@ -1,8 +1,8 @@
 from fastapi import APIRouter
-from connections import ConnectionManager
+
+from connections import manager
 
 router = APIRouter()
-manager = ConnectionManager()
 
 @router.get("/messages/count")
 async def get_message_count():

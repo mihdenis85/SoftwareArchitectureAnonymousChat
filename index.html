@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Анонимный Чат</title>
+    <title>Anonymous Chat</title>
     <style>
         #messages {
             border: 1px solid #ccc;
@@ -23,24 +23,37 @@
     </style>
 </head>
 <body>
-<h1>Анонимный Чат</h1>
+<h1>Anonymous Chat</h1>
 <div id="messages"></div>
-<input id="messageText" type="text" placeholder="Введите сообщение..." autocomplete="off"/>
-<button onclick="sendMessage()">Отправить</button>
-<button onclick="fetchMessageCount()">Обновить количество сообщений</button>
-<div id="messageCount">Общее количество сообщений: 0</div>
+<input id="messageText" type="text" placeholder="Enter your message..." autocomplete="off"/>
+<button onclick="sendMessage()">Send</button>
+<button onclick="fetchMessageCount()">Refresh Message Count</button>
+<div id="messageCount">Total messages: 0</div>
 
 <script>
     const messageText = document.getElementById('messageText');
     const messages = document.getElementById('messages');
     const messageCountElement = document.getElementById('messageCount');
 
+    const sentMessages = {};
+
     const ws = new WebSocket('ws://localhost:8000/ws');
 
     ws.onmessage = function (event) {
-        const message = event.data;
+        const data = JSON.parse(event.data);
+        const message = data.message;
+        const timestamp = data.timestamp;
+
         const messageElement = document.createElement('div');
-        messageElement.textContent = message;
+
+        if (sentMessages[timestamp]) {
+            const responseTime = Date.now() - sentMessages[timestamp];
+            messageElement.textContent = `${message} (Response time: ${responseTime} ms)`;
+            delete sentMessages[timestamp];
+        } else {
+            messageElement.textContent = message;
+        }
+
         messages.appendChild(messageElement);
         messages.scrollTop = messages.scrollHeight;
     };
@@ -48,7 +61,16 @@
     function sendMessage() {
         if (messageText.value !== '') {
             const message = messageText.value;
-            ws.send(message);
+            const timestamp = Date.now();
+
+            const messageData = {
+                message: message,
+                timestamp: timestamp
+            };
+
+            sentMessages[timestamp] = timestamp;
+
+            ws.send(JSON.stringify(messageData));
             messageText.value = '';
         }
     }
@@ -63,14 +85,14 @@
             })
             .then(data => {
                 if (data && 'total_messages' in data) {
-                    messageCountElement.textContent = `Общее количество сообщений: ${data.total_messages}`;
+                    messageCountElement.textContent = `Total messages: ${data.total_messages}`;
                 } else {
-                    messageCountElement.textContent = 'Не удалось получить количество сообщений';
+                    messageCountElement.textContent = 'Failed to fetch message count';
                 }
             })
             .catch(error => {
-                console.error('Ошибка получения количества сообщений:', error);
-                messageCountElement.textContent = 'Произошла ошибка при загрузке данных';
+                console.error('Error fetching message count:', error);
+                messageCountElement.textContent = 'An error occurred while loading data';
             });
     }
 
