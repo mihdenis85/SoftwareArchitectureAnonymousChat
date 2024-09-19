@@ -47,20 +47,9 @@
       const ws = new WebSocket("ws://localhost:8000/ws");
 
       ws.onmessage = function (event) {
-        const data = JSON.parse(event.data);
-        const message = data.message;
-        const timestamp = data.timestamp;
-
+        const message = event.data;
         const messageElement = document.createElement("div");
-
-        if (sentMessages[timestamp]) {
-          const responseTime = Date.now() - sentMessages[timestamp];
-          messageElement.textContent = `${message} (Response time: ${responseTime} ms)`;
-          delete sentMessages[timestamp];
-        } else {
-          messageElement.textContent = message;
-        }
-
+        messageElement.textContent = message;
         messages.appendChild(messageElement);
         messages.scrollTop = messages.scrollHeight;
       };
@@ -68,16 +57,7 @@
       function sendMessage() {
         if (messageText.value !== "") {
           const message = messageText.value;
-          const timestamp = Date.now();
-
-          const messageData = {
-            message: message,
-            timestamp: timestamp,
-          };
-
-          sentMessages[timestamp] = timestamp;
-
-          ws.send(JSON.stringify(messageData));
+          ws.send(message);
           messageText.value = "";
         }
       }
@@ -99,8 +79,7 @@
           })
           .catch((error) => {
             console.error("Error fetching message count:", error);
-            messageCountElement.textContent =
-              "An error occurred while loading data";
+            messageCountElement.textContent = "An error occurred while loading data";
           });
       }
 
