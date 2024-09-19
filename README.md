@@ -36,3 +36,11 @@ npx cypress open
 3. Go to the E2E Testing and open Electron.
 
 4. In specs tab choose quality-attributes.cy.js and that's it.
+
+Maintainability test:
+
+1. Use command
+
+```shell
+radon mi -s "<filename>.py"
+```
