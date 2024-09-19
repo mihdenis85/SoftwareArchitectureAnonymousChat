@@ -42,20 +42,37 @@
       const messages = document.getElementById("messages");
       const messageCountElement = document.getElementById("messageCount");
 
-      const sentMessages = {};
+      let ws;
+      const reconnectInterval = 3000;
 
-      const ws = new WebSocket("ws://localhost:8000/ws");
+      function connectWebSocket() {
+        ws = new WebSocket("ws://localhost:8000/ws");
 
-      ws.onmessage = function (event) {
-        const message = event.data;
-        const messageElement = document.createElement("div");
-        messageElement.textContent = message;
-        messages.appendChild(messageElement);
-        messages.scrollTop = messages.scrollHeight;
-      };
+        ws.onopen = function() {
+          console.log("Connected to the WebSocket server.");
+          messages.innerHTML = '';
+        };
+
+        ws.onmessage = function(event) {
+          const message = event.data;
+          const messageElement = document.createElement("div");
+          messageElement.textContent = message;
+          messages.appendChild(messageElement);
+          messages.scrollTop = messages.scrollHeight;
+        };
+
+        ws.onclose = function() {
+          console.log("WebSocket connection closed. Attempting to reconnect...");
+          setTimeout(connectWebSocket, reconnectInterval);
+        };
+
+        ws.onerror = function(error) {
+          console.error("WebSocket error:", error);
+        };
+      }
 
       function sendMessage() {
-        if (messageText.value !== "") {
+        if (messageText.value !== "" && ws.readyState === WebSocket.OPEN) {
           const message = messageText.value;
           ws.send(message);
           messageText.value = "";
@@ -83,6 +100,7 @@
           });
       }
 
+      connectWebSocket();
       fetchMessageCount();
     </script>
   </body>
