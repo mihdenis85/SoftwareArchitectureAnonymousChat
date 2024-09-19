@@ -1,103 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Anonymous Chat</title>
     <style>
-        #messages {
-            border: 1px solid #ccc;
-            height: 300px;
-            overflow-y: scroll;
-            padding: 10px;
-        }
+      #messages {
+        border: 1px solid #ccc;
+        height: 300px;
+        overflow-y: scroll;
+        padding: 10px;
+      }
 
-        #input {
-            margin-top: 10px;
-        }
+      #input {
+        margin-top: 10px;
+      }
 
-        #messageCount {
-            margin-top: 10px;
-            font-weight: bold;
-        }
+      #messageCount {
+        margin-top: 10px;
+        font-weight: bold;
+      }
     </style>
-</head>
-<body>
-<h1>Anonymous Chat</h1>
-<div id="messages"></div>
-<input id="messageText" type="text" placeholder="Enter your message..." autocomplete="off"/>
-<button onclick="sendMessage()">Send</button>
-<button onclick="fetchMessageCount()">Refresh Message Count</button>
-<div id="messageCount">Total messages: 0</div>
+  </head>
+  <body>
+    <h1>Anonymous Chat</h1>
+    <div id="messages"></div>
+    <input
+      id="messageText"
+      type="text"
+      placeholder="Enter your message..."
+      autocomplete="off"
+    />
+    <button id="sendText" onclick="sendMessage()">Send</button>
+    <button id="updateMessages" onclick="fetchMessageCount()">
+      Refresh Message Count
+    </button>
+    <div id="messageCount">Total messages: 0</div>
 
-<script>
-    const messageText = document.getElementById('messageText');
-    const messages = document.getElementById('messages');
-    const messageCountElement = document.getElementById('messageCount');
+    <script>
+      const messageText = document.getElementById("messageText");
+      const messages = document.getElementById("messages");
+      const messageCountElement = document.getElementById("messageCount");
 
-    const sentMessages = {};
+      const sentMessages = {};
 
-    const ws = new WebSocket('ws://localhost:8000/ws');
+      const ws = new WebSocket("ws://localhost:8000/ws");
 
-    ws.onmessage = function (event) {
+      ws.onmessage = function (event) {
         const data = JSON.parse(event.data);
         const message = data.message;
         const timestamp = data.timestamp;
 
-        const messageElement = document.createElement('div');
+        const messageElement = document.createElement("div");
 
         if (sentMessages[timestamp]) {
-            const responseTime = Date.now() - sentMessages[timestamp];
-            messageElement.textContent = `${message} (Response time: ${responseTime} ms)`;
-            delete sentMessages[timestamp];
+          const responseTime = Date.now() - sentMessages[timestamp];
+          messageElement.textContent = `${message} (Response time: ${responseTime} ms)`;
+          delete sentMessages[timestamp];
         } else {
-            messageElement.textContent = message;
+          messageElement.textContent = message;
         }
 
         messages.appendChild(messageElement);
         messages.scrollTop = messages.scrollHeight;
-    };
+      };
 
-    function sendMessage() {
-        if (messageText.value !== '') {
-            const message = messageText.value;
-            const timestamp = Date.now();
+      function sendMessage() {
+        if (messageText.value !== "") {
+          const message = messageText.value;
+          const timestamp = Date.now();
 
-            const messageData = {
-                message: message,
-                timestamp: timestamp
-            };
+          const messageData = {
+            message: message,
+            timestamp: timestamp,
+          };
 
-            sentMessages[timestamp] = timestamp;
+          sentMessages[timestamp] = timestamp;
 
-            ws.send(JSON.stringify(messageData));
-            messageText.value = '';
+          ws.send(JSON.stringify(messageData));
+          messageText.value = "";
         }
-    }
+      }
 
-    function fetchMessageCount() {
-        fetch('http://localhost:8000/messages/count')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data && 'total_messages' in data) {
-                    messageCountElement.textContent = `Total messages: ${data.total_messages}`;
-                } else {
-                    messageCountElement.textContent = 'Failed to fetch message count';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching message count:', error);
-                messageCountElement.textContent = 'An error occurred while loading data';
-            });
-    }
+      function fetchMessageCount() {
+        fetch("http://localhost:8000/messages/count")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            if (data && "total_messages" in data) {
+              messageCountElement.textContent = `Total messages: ${data.total_messages}`;
+            } else {
+              messageCountElement.textContent = "Failed to fetch message count";
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching message count:", error);
+            messageCountElement.textContent =
+              "An error occurred while loading data";
+          });
+      }
 
-    fetchMessageCount();
-</script>
-
-</body>
+      fetchMessageCount();
+    </script>
+  </body>
 </html>
