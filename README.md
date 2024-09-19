@@ -9,6 +9,12 @@ Anonymous chat for Software Architecture course
 3. In the file main.py there is basic configuration of project, and we start server using this file.
 4. Index.html is the client code.
 
+## Install all dependences
+Use requirements.txt:
+```shell
+pip install -r requirements.txt
+```
+
 ## How to run the project
 
 1. Run main.py
