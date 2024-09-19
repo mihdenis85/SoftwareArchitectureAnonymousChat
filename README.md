@@ -10,7 +10,8 @@ Anonymous chat for Software Architecture course
 4. Index.html is the client code.
 
 ## Install all dependences
-Use requirements.txt:
+Firstly, install react and python.
+Secondly, use requirements.txt:
 ```shell
 pip install -r requirements.txt
 ```
