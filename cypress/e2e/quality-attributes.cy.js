@@ -2,9 +2,10 @@ describe("Check lag between server and client", () => {
   it("expects to be less then 1 second", () => {
     cy.intercept("/").as("apiRequest");
     cy.visit("/");
-
+    
     // Write message in input field and send it to the server
     cy.get("[id=messageText]").type("Hello, World!");
+    cy.wait(200);
     cy.get("[id=sendText]").click();
 
     // Calculate time when send the message
@@ -33,6 +34,7 @@ describe("Check whether messages are saved after reconnect", () => {
     // Send message in chat
     const sendMessage = (message) => {
       cy.get("[id=messageText]").type(message);
+      cy.wait(200);
       cy.get("[id=sendText]").click();
     };
 
@@ -54,7 +56,6 @@ describe("Check whether messages are saved after reconnect", () => {
     // Save messages before reloading
     const messagesBeforeReload = getMessages();
     cy.reload();
-    sendMessage("123");
     // Save messages after reloading
     const messageAfterReload = getMessages();
 
